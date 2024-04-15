@@ -8,7 +8,49 @@ def read_pure_inference_output(filepath_='/Users/sishitan/Documents/Scripts/qusi
     Read the inference output as a Pandas data frame
     :return: The inference output
     """
-    return pd.read_csv(filepath_)
+    df = pd.read_csv(filepath_)
+    return df
+
+
+def read_inference_with_tags_and_labels(filepath_='/Users/sishitan/Documents/Scripts/qusi_project/qusi/inferences'
+                                        '/results_ts0_550k_with_tags.csv') -> pd.DataFrame:
+    """
+    Read the inference output with Sumi tags and labels as a Pandas data frame
+    :param filepath_:
+    :return:
+    """
+    df = pd.read_csv(filepath_, index_col=False)
+    return df
+
+
+def meaning_of_tags(tag):
+    if tag == 'v':
+        meaning = 'Variable star'
+    elif tag == 'n':
+        meaning = 'Novalike objects'
+    elif tag == 'nr':
+        meaning = 'CV with repeating flares'
+    elif tag == 'm':
+        meaning = 'Moving objects'
+    elif tag == 'j':
+        meaning = 'Junk'
+    elif tag == 'no_tag':
+        meaning = 'No tag'
+    elif tag == 'c':
+        meaning = 'Single-lens candidate'
+    elif tag == 'cf':
+        meaning = 'Single-lens candidate with finite source'
+    elif tag == 'cp':
+        meaning = 'Single-lens candidate with parallax'
+    elif tag == 'cw':
+        meaning = 'Weak candidate'
+    elif tag == 'cs':
+        meaning = 'Short event single-lens candidate'
+    elif tag == 'cb':
+        meaning = 'Binary lens candidate'
+    else:
+        meaning = np.nan
+    return meaning
 
 
 def read_sumi_nine_year_label(
@@ -49,14 +91,14 @@ def read_sumi_nine_year_label(
                     'name_extra_alert3': np.str_,
                     'x_extra_alert3': np.float64, 'y_extra_alert3': np.float64
                     }
-    candlist_df = pd.read_table(filepath_, delim_whitespace=True, header=None,
+    sumi_df = pd.read_table(filepath_, delim_whitespace=True, header=None,
                                 names=column_names,
                                 comment='#', dtype=column_types)
-    candlist_df['lightcurve_name'] = candlist_df['field'].astype(str) + '-' + candlist_df['band'].astype(
-        str) + '-' + candlist_df['chip'].astype(str) \
-                                     + '-' + candlist_df['subframe'].astype(str) + '-' + candlist_df['ID'].astype(
+    sumi_df['lightcurve_name'] = sumi_df['field'].astype(str) + '-' + sumi_df['band'].astype(
+        str) + '-' + sumi_df['chip'].astype(str) \
+                                     + '-' + sumi_df['subframe'].astype(str) + '-' + sumi_df['ID'].astype(
         str)
-    return candlist_df
+    return sumi_df
 
 
 def alert_id_reader(
