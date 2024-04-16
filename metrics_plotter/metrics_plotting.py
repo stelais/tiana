@@ -1,3 +1,4 @@
+from bokeh.palettes import Category20
 from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,53 +7,76 @@ import file_organizers.file_reading as fr
 import threshold_metrics as tm
 
 
-def confusion_matrix_plotter(true_labels, predictions,
-                             inference_path, type_, test_split,
-                             threshold_value,
+def confusion_matrix_plotter(*, true_labels_, predictions_,
+                             inference_path_, dataset_type_, test_split_,
+                             threshold_value_,
                              should_normalize_=None,
                              labels_=None,
-                             show_plot=False, small_size=False):
+                             show_plot_=False, save_plot_=False, small_size=False):
+    """
+    This function plots the confusion matrix
+    :param save_plot_:
+    :param true_labels_:
+    :param predictions_: 
+    :param inference_path_:
+    :param dataset_type_:
+    :param test_split_: 
+    :param threshold_value_: 
+    :param should_normalize_: 
+    :param labels_: 
+    :param show_plot_: 
+    :param small_size: Don't use this - not working properly
+    :return: 
+    """
     if labels_ is None:
         labels_ = ['Not \n Microlensing', 'Microlensing']
 
-    disp = ConfusionMatrixDisplay.from_predictions(true_labels,
-                                                   predictions,
+    disp = ConfusionMatrixDisplay.from_predictions(true_labels_,
+                                                   predictions_,
                                                    display_labels=labels_,
                                                    cmap=plt.cm.Blues,
                                                    normalize=should_normalize_)
 
-    plt.title(f'Confusion Matrix - Threshold: {threshold_value} | {type_} {test_split}')
+    plt.title(f'Confusion Matrix - Threshold: {threshold_value_} | {dataset_type_} ts{test_split_}')
 
-    if small_size:
-        plt.rcParams['figure.figsize'] = [4, 4]
-        plt.tight_layout()
-        if should_normalize_ == 'true':
-            plt.savefig(f'{inference_path}/{type_}_inference_plots/normalized_confusion_matrix_'
-                        f'{threshold_value}_ts{test_split}_small.png', dpi=300)
+    if save_plot_:
+        if small_size:
+            plt.rcParams['figure.figsize'] = [4, 4]
+            plt.tight_layout()
+            if should_normalize_ == 'true':
+                plt.savefig(f'{inference_path_}/{dataset_type_}_inference_plots/normalized_confusion_matrix_'
+                            f'{threshold_value_}_ts{test_split_}_small.png', dpi=300)
+            else:
+                plt.savefig(f'{inference_path_}/{dataset_type_}_inference_plots/confusion_matrix_'
+                            f'{threshold_value_}_ts{test_split_}_small.png', dpi=300)
         else:
-            plt.savefig(f'{inference_path}/{type_}_inference_plots/confusion_matrix_'
-                        f'{threshold_value}_ts{test_split}_small.png', dpi=300)
-    else:
-        plt.tight_layout()
-        if should_normalize_ == 'true':
-            plt.savefig(f'{inference_path}/{type_}_inference_plots/normalized_confusion_matrix_'
-                        f'{threshold_value}_ts{test_split}.png', dpi=300)
-        else:
-            plt.savefig(f'{inference_path}/{type_}_inference_plots/confusion_matrix_'
-                        f'{threshold_value}_ts{test_split}.png', dpi=300)
-    if show_plot:
+            plt.tight_layout()
+            if should_normalize_ == 'true':
+                plt.savefig(f'{inference_path_}/{dataset_type_}_inference_plots/normalized_confusion_matrix_'
+                            f'{threshold_value_}_ts{test_split_}.png', dpi=300)
+            else:
+                plt.savefig(f'{inference_path_}/{dataset_type_}_inference_plots/confusion_matrix_'
+                            f'{threshold_value_}_ts{test_split_}.png', dpi=300)
+    if show_plot_:
         plt.show()
     plt.close()
 
 
-def inference_cumulative_distribution(inference_with_threshold, show_plot=False):
+def inference_cumulative_distribution(*, inference_with_threshold_,
+                                      inference_path_, dataset_type_, test_split_,
+                                      show_plot_=False, save_plot_=False):
     """
     This function plots the cumulative distribution of the inference
-    :param inference_with_threshold:
+    :param save_plot_:
+    :param test_split_:
+    :param dataset_type_:
+    :param inference_path_:
+    :param show_plot_:
+    :param inference_with_threshold_:
     :return:
     """
-    microlensing_df = inference_with_threshold[inference_with_threshold['true_label'] == 1]
-    non_microlensing_df = inference_with_threshold[inference_with_threshold['true_label'] == 0]
+    microlensing_df = inference_with_threshold_[inference_with_threshold_['true_label'] == 1]
+    non_microlensing_df = inference_with_threshold_[inference_with_threshold_['true_label'] == 0]
 
     # Scores in ascending order:
     microlensing_scores = microlensing_df.sort_values('Score')['Score']
@@ -73,35 +97,93 @@ def inference_cumulative_distribution(inference_with_threshold, show_plot=False)
     fig, ax = plt.subplots()
     ax.step(microlensing_scores, microlensing_cdf, label=f'Microlensing: {len(microlensing_scores) - 2}')
     ax.step(non_microlensing_scores, non_microlensing_cdf, label=f'Not Microlensing: {len(non_microlensing_scores) - 2}', color='orange')
-    ax.set(xlabel='Neural Network Confidence', ylabel='Cumulative Distribution', title=f'Cumulative Distribution')
+    ax.set(xlabel='Neural Network Confidence', ylabel='Cumulative Distribution',
+           title=f'Cumulative Distribution {dataset_type_} ts{test_split_}')
     ax.legend()
-    if show_plot:
+    if save_plot_:
+        plt.savefig(f'{inference_path_}/{dataset_type_}_inference_plots/cumulative_'
+                    f'ts{test_split_}.png', dpi=300)
+    if show_plot_:
         plt.show()
     plt.close()
 
 
+def inference_cumulative_distribution_per_tag(*, inference_with_threshold_,
+                                              inference_path_, dataset_type_, test_split_,
+                                              show_plot_=False, save_plot_=False):
+    """
+    This function plots the cumulative distribution of the inference per tags
+    :param save_plot_:
+    :param test_split_:
+    :param dataset_type_:
+    :param inference_path_:
+    :param show_plot_:
+    :param inference_with_threshold_:
+    :return:
+    """
+    sumi_tags = ['v', 'n', 'nr', 'm', 'j', '', 'c', 'cf', 'cp', 'cw', 'cs', 'cb']
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=300)
+    ax.set(xlabel='Neural Network Confidence', ylabel='Cumulative Distribution ',
+           title=f'Cumulative Distribution {dataset_type_} ts{test_split_}')
+    for sumi_tag, color_index in zip(sumi_tags, np.arange(0, len(sumi_tags))):
+        sumi_tag_df = inference_with_threshold_[inference_with_threshold_['sumi_tag'] == sumi_tag]
+        # Scores in ascending order:
+        sumi_tag_scores = sumi_tag_df.sort_values('Score')['Score']
+        # Inserting 0 and 1s
+        sumi_tag_scores = np.insert(sumi_tag_scores, 0, 0)
+        sumi_tag_scores = np.insert(sumi_tag_scores, len(sumi_tag_scores), 1)
+        # Defining CDF values
+        step_sumi_tag = 1 / (len(sumi_tag_scores) - 1)
+        sumi_tag_cdf = np.arange(0, 1 + step_sumi_tag / 2, step_sumi_tag)
+        # Plotting
+        tag_name = fr.meaning_of_sumi_tags(sumi_tag)
+        ax.step(sumi_tag_scores, sumi_tag_cdf, label=f'{tag_name}: {len(sumi_tag_cdf) - 2}',
+                color=Category20[20][color_index])
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
+    if save_plot_:
+        plt.savefig(f'{inference_path_}/{dataset_type_}_inference_plots/cumulative_'
+                    f'ts{test_split_}_per_tag.png', dpi=300)
+    if show_plot_:
+        plt.show()
+    plt.close()
+
 
 if __name__ == '__main__':
-    type_ = '550k'
+    dataset_type = '550k'
     test_split = 0
     threshold_value = 0.5
 
     inference_folder = '/Users/sishitan/Documents/Scripts/qusi_project/qusi/inferences/'
-    inference_file = f'results_ts{test_split}_{type_}_with_tags.csv'
+    inference_file = f'results_ts{test_split}_{dataset_type}_with_tags.csv'
 
     inference_df = fr.read_inference_with_tags_and_labels(inference_folder + inference_file)
     inference_with_threshold = tm.threshold_prediction_setter(inference_df, threshold_value)
     true_labels = inference_with_threshold['true_label']
     predictions = inference_with_threshold['prediction']
 
-    confusion_matrix_plotter(true_labels, predictions, inference_folder, type_, test_split, threshold_value)
-    confusion_matrix_plotter(true_labels, predictions, inference_folder, type_, test_split, threshold_value,
-                             should_normalize_='true')
+    confusion_matrix_plotter(true_labels_=true_labels, predictions_=predictions,
+                             inference_path_=inference_folder, dataset_type_=dataset_type, test_split_=test_split,
+                             threshold_value_=threshold_value,
+                             save_plot_=True)
+    confusion_matrix_plotter(true_labels_=true_labels, predictions_=predictions,
+                             inference_path_=inference_folder, dataset_type_=dataset_type, test_split_=test_split,
+                             threshold_value_=threshold_value,
+                             save_plot_=True, should_normalize_='true')
 
-    true_positives, false_positives, true_negatives, false_negatives = tm.performance_calculator(true_labels, predictions)
+    true_positives, false_positives, true_negatives, false_negatives = tm.performance_calculator(true_labels_=true_labels,
+                                                                                                 predictions_=predictions)
     print('True Positives: ', true_positives)
     print('False Positives: ', false_positives)
     print('True Negatives: ', true_negatives)
     print('False Negatives: ', false_negatives)
 
-    inference_cumulative_distribution(inference_with_threshold, show_plot=True)
+    inference_cumulative_distribution(inference_with_threshold_=inference_with_threshold,
+                                      inference_path_=inference_folder, dataset_type_=dataset_type,
+                                      test_split_=test_split,
+                                      save_plot_=True)
+    inference_cumulative_distribution_per_tag(inference_with_threshold_=inference_with_threshold,
+                                              inference_path_=inference_folder, dataset_type_=dataset_type,
+                                              test_split_=test_split,
+                                              save_plot_=True)
+

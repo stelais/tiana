@@ -19,11 +19,11 @@ def read_inference_with_tags_and_labels(filepath_='/Users/sishitan/Documents/Scr
     :param filepath_:
     :return:
     """
-    df = pd.read_csv(filepath_, index_col=False)
+    df = pd.read_csv(filepath_, index_col=False, na_values=(), keep_default_na=False)
     return df
 
 
-def meaning_of_tags(tag):
+def meaning_of_sumi_tags(tag):
     if tag == 'v':
         meaning = 'Variable star'
     elif tag == 'n':
@@ -35,6 +35,10 @@ def meaning_of_tags(tag):
     elif tag == 'j':
         meaning = 'Junk'
     elif tag == 'no_tag':
+        meaning = 'No tag'
+    elif tag == '':
+        meaning = 'No tag'
+    elif tag == np.nan:
         meaning = 'No tag'
     elif tag == 'c':
         meaning = 'Single-lens candidate'
