@@ -1,7 +1,9 @@
-from bokeh.palettes import Category20
-from sklearn.metrics import ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import numpy as np
+from bokeh.palettes import Category20
+
+from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.metrics import roc_curve, auc
 
 import file_organizers.file_reading as fr
 import threshold_metrics as tm
@@ -62,7 +64,7 @@ def confusion_matrix_plotter(*, true_labels_, predictions_,
     plt.close()
 
 
-def inference_cumulative_distribution(*, inference_with_threshold_,
+def inference_cumulative_distribution(*, inference_with_threshold_df_,
                                       inference_path_, dataset_type_, test_split_,
                                       show_plot_=False, save_plot_=False):
     """
@@ -72,11 +74,11 @@ def inference_cumulative_distribution(*, inference_with_threshold_,
     :param dataset_type_:
     :param inference_path_:
     :param show_plot_:
-    :param inference_with_threshold_:
+    :param inference_with_threshold_df_:
     :return:
     """
-    microlensing_df = inference_with_threshold_[inference_with_threshold_['true_label'] == 1]
-    non_microlensing_df = inference_with_threshold_[inference_with_threshold_['true_label'] == 0]
+    microlensing_df = inference_with_threshold_df_[inference_with_threshold_df_['true_label'] == 1]
+    non_microlensing_df = inference_with_threshold_df_[inference_with_threshold_df_['true_label'] == 0]
 
     # Scores in ascending order:
     microlensing_scores = microlensing_df.sort_values('Score')['Score']
@@ -108,7 +110,7 @@ def inference_cumulative_distribution(*, inference_with_threshold_,
     plt.close()
 
 
-def inference_cumulative_distribution_per_tag(*, inference_with_threshold_,
+def inference_cumulative_distribution_per_tag(*, inference_with_threshold_df_,
                                               inference_path_, dataset_type_, test_split_,
                                               show_plot_=False, save_plot_=False):
     """
@@ -118,7 +120,7 @@ def inference_cumulative_distribution_per_tag(*, inference_with_threshold_,
     :param dataset_type_:
     :param inference_path_:
     :param show_plot_:
-    :param inference_with_threshold_:
+    :param inference_with_threshold_df_:
     :return:
     """
     sumi_tags = ['v', 'n', 'nr', 'm', 'j', '', 'c', 'cf', 'cp', 'cw', 'cs', 'cb']
@@ -126,7 +128,7 @@ def inference_cumulative_distribution_per_tag(*, inference_with_threshold_,
     ax.set(xlabel='Neural Network Confidence', ylabel='Cumulative Distribution ',
            title=f'Cumulative Distribution {dataset_type_} ts{test_split_}')
     for sumi_tag, color_index in zip(sumi_tags, np.arange(0, len(sumi_tags))):
-        sumi_tag_df = inference_with_threshold_[inference_with_threshold_['sumi_tag'] == sumi_tag]
+        sumi_tag_df = inference_with_threshold_df_[inference_with_threshold_df_['sumi_tag'] == sumi_tag]
         # Scores in ascending order:
         sumi_tag_scores = sumi_tag_df.sort_values('Score')['Score']
         # Inserting 0 and 1s
@@ -149,6 +151,45 @@ def inference_cumulative_distribution_per_tag(*, inference_with_threshold_,
     plt.close()
 
 
+def roc_plotter(*, inference_df_,
+                inference_path_, dataset_type_, test_split_,
+                show_plot_=False, save_plot_=False):
+    """
+    From this example https://scikit-learn.org/stable/auto_examples/
+    model_selection/plot_roc.html#sphx-glr-auto-examples-model-selection-plot-roc-py
+    :param save_plot_:
+    :param show_plot_:
+    :param test_split_:
+    :param dataset_type_:
+    :param inference_path_:
+    :param inference_df_:
+    :param dataframe_:
+    :return:
+    """
+    # Compute ROC curve and ROC area for each class
+    false_positive_rate, true_positive_rate, _ = roc_curve(inference_df_['true_label'], inference_df_['Score'])
+    roc_auc = auc(false_positive_rate, true_positive_rate)
+
+    plt.figure()
+    plt.plot(false_positive_rate, true_positive_rate,
+             color="maroon", lw=3,
+             label="ROC curve (area = %0.5f)" % roc_auc)
+    # diagonal
+    plt.plot([0, 1], [0, 1], color="navy", lw=2, linestyle="--", label="Diagonal Line TPR = FPR")
+    # plt.xlim([-0.05, 1.0])
+    # plt.ylim([-0.05, 1.05])
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title(f"Receiver Operating Characteristic | {dataset_type_} ts{test_split_}")
+    plt.legend(loc="lower right")
+    if save_plot_:
+        plt.savefig(f'{inference_path_}/{dataset_type_}_inference_plots/ROC_curve_'
+                    f'ts{test_split_}.png', dpi=300)
+    if show_plot_:
+        plt.show()
+    plt.close()
+
+
 if __name__ == '__main__':
     dataset_type = '550k'
     test_split = 0
@@ -158,9 +199,9 @@ if __name__ == '__main__':
     inference_file = f'results_ts{test_split}_{dataset_type}_with_tags.csv'
 
     inference_df = fr.read_inference_with_tags_and_labels(inference_folder + inference_file)
-    inference_with_threshold = tm.threshold_prediction_setter(inference_df, threshold_value)
-    true_labels = inference_with_threshold['true_label']
-    predictions = inference_with_threshold['prediction']
+    inference_with_threshold_df = tm.threshold_prediction_setter(inference_df, threshold_value)
+    true_labels = inference_with_threshold_df['true_label']
+    predictions = inference_with_threshold_df['prediction']
 
     confusion_matrix_plotter(true_labels_=true_labels, predictions_=predictions,
                              inference_path_=inference_folder, dataset_type_=dataset_type, test_split_=test_split,
@@ -178,12 +219,15 @@ if __name__ == '__main__':
     print('True Negatives: ', true_negatives)
     print('False Negatives: ', false_negatives)
 
-    inference_cumulative_distribution(inference_with_threshold_=inference_with_threshold,
+    inference_cumulative_distribution(inference_with_threshold_df_=inference_with_threshold_df,
                                       inference_path_=inference_folder, dataset_type_=dataset_type,
                                       test_split_=test_split,
                                       save_plot_=True)
-    inference_cumulative_distribution_per_tag(inference_with_threshold_=inference_with_threshold,
+    inference_cumulative_distribution_per_tag(inference_with_threshold_df_=inference_with_threshold_df,
                                               inference_path_=inference_folder, dataset_type_=dataset_type,
                                               test_split_=test_split,
                                               save_plot_=True)
 
+    roc_plotter(inference_df_=inference_df, inference_path_=inference_folder,
+                dataset_type_=dataset_type, test_split_=test_split,
+                save_plot_=True)
