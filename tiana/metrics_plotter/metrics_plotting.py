@@ -5,7 +5,7 @@ from bokeh.palettes import Category20
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import roc_curve, auc
 
-import file_organizers.file_reading as fr
+import tiana.file_organizers.file_reading as fr
 import threshold_metrics as tm
 
 
