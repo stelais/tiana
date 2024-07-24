@@ -8,7 +8,7 @@ def read_pure_inference_output(filepath_='/Users/sishitan/Documents/Scripts/qusi
     Read the inference output as a Pandas data frame
     :return: The inference output
     """
-    df = pd.read_csv(filepath_)
+    df = pd.read_csv(filepath_, index_col=0)
     return df
 
 
@@ -19,7 +19,7 @@ def read_inference_with_tags_and_labels(filepath_='/Users/sishitan/Documents/Scr
     :param filepath_:
     :return:
     """
-    df = pd.read_csv(filepath_, index_col=False, na_values=(), keep_default_na=False)
+    df = pd.read_csv(filepath_, index_col=0, na_values=(), keep_default_na=False)
     return df
 
 
