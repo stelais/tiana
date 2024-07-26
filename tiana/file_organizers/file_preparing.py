@@ -88,7 +88,7 @@ if __name__ == '__main__':
         inference_with_tags_and_labels_df.to_csv(complete_inference_path)
 
     combined_inference_df = combine_all_inferences(inference_folder)
-    combined_inference_df.to_csv(inference_folder + 'combined_results_550k_with_tags.csv')
+    combined_inference_df.to_csv(inference_folder + 'results_550k_combined_with_tags.csv')
 
 # moa_intern_name = 'gb5-R-9-3-41366'
 # sumi_dataframe = fr.read_sumi_nine_year_label()
